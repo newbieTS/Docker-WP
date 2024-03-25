@@ -1,0 +1,53 @@
+version: '3.9'
+
+networks:
+  wpdocker:
+
+services:
+  wpdocker-wordpress:
+    build:
+      context: "./wordpress"
+    container_name: "wpdocker-wordpress"
+    restart: "always"
+    networks:
+      - "wpdocker"
+    depends_on:
+      - "wpdocker-mysql"
+    volumes:
+      - "./../../app:/var/www/html"
+      - "./wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini"
+    environment:
+      WORDPRESS_DB_HOST: "wpdocker-mysql:3306"
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "80:80"
+      - "443:443"
+
+  wpdocker-mysql:
+    build:
+      context: "./mysql"
+    container_name: "wpdocker-mysql"
+    restart: "always"
+    networks:
+      - "wpdocker"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - "./../../database:/var/lib/mysql"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: "wpdocker-phpmyadmin"
+    restart: "always"
+    networks:
+      - "wpdocker"
+    environment:
+      PMA_HOST: "wpdocker-mysql"
+      PMA_PORT: "3306"
+    ports:
+      - "8080:80"
